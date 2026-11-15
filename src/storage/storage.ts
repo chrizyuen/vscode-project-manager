@@ -180,7 +180,8 @@ export class ProjectStorage {
             return {
                 label: item.name,
                 description: item.rootPath,
-                profile: item.profile
+                profile: item.profile,
+                paths: item.paths
             };
         });
         return newItems;
@@ -207,7 +208,8 @@ export class ProjectStorage {
         const newItems = this.projects.filter(item => item.enabled && (item.tags.includes(tag) || (tag === '' && item.tags.length === 0))).map(item => {
             return {
                 label: item.name,
-                description: item.rootPath
+                description: item.rootPath,
+                paths: item.paths
             };
         });
         return newItems;
@@ -223,7 +225,8 @@ export class ProjectStorage {
             return {
                 label: item.name,
                 description: item.rootPath,
-                profile: item.profile
+                profile: item.profile,
+                paths: item.paths
             };
         });
         return newItems;

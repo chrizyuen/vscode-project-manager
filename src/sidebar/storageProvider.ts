@@ -3,6 +3,7 @@
 *  Licensed under the GPLv3 License. See License.md in the project root for license information.
 *--------------------------------------------------------------------------------------------*/
 
+import * as fs from "fs";
 import path = require("path");
 import * as vscode from "vscode";
 import { Container } from "../core/container";
@@ -12,23 +13,69 @@ import { isRemotePath } from "../utils/remote";
 import { sortProjects } from "../utils/sorter";
 import { getGitBranch } from "../utils/git";
 import { NO_TAGS_DEFINED } from "./constants";
-import { NoTagNode, ProjectNode, TagNode } from "./nodes";
+import { NoTagNode, PathNode, ProjectNode, TagNode } from "./nodes";
+
+const TODO_FOLDER = ".todo";
+const IGNORED_TODO_ENTRIES = new Set([ ".DS_Store" ]);
+
+interface ChildPath {
+    fullPath: string;
+    browsable: boolean;
+}
+
+/**
+ * Entries of a folder inside `.todo` (files and subfolders), folders first,
+ * then by name. Returns an empty list when the folder is missing or unreadable.
+ */
+function listTodoEntries(dir: string): ChildPath[] {
+    try {
+        return fs.readdirSync(dir, { withFileTypes: true })
+            .filter(entry => !IGNORED_TODO_ENTRIES.has(entry.name) && (entry.isFile() || entry.isDirectory()))
+            .sort((a, b) => (Number(b.isDirectory()) - Number(a.isDirectory())) || a.name.localeCompare(b.name))
+            .map(entry => ({ fullPath: path.join(dir, entry.name), browsable: true }));
+    } catch {
+        return [];
+    }
+}
+
+/**
+ * Child paths shown under a project node: the project's configured `paths`,
+ * followed by the contents of `<rootPath>/.todo` (listed by default, no config
+ * needed; its subfolders expand in place).
+ */
+function getProjectChildPaths(projectPath: string, paths?: string[]): ChildPath[] {
+    const rootPath = PathUtils.expandHomePath(projectPath);
+    const result: ChildPath[] = (paths ?? []).map(p => ({
+        fullPath: path.resolve(rootPath, PathUtils.expandHomePath(p)),
+        browsable: false
+    }));
+    if (isRemotePath(projectPath) || path.extname(rootPath) === ".code-workspace") {
+        return result;
+    }
+    for (const entry of listTodoEntries(path.join(rootPath, TODO_FOLDER))) {
+        if (!result.some(r => r.fullPath === entry.fullPath)) {
+            result.push(entry);
+        }
+    }
+    return result;
+}
 
 interface ProjectInQuickPick {
     label: string;
     description: string;
     profile: string;
+    paths?: string[];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 interface ProjectInQuickPickList extends Array<ProjectInQuickPick> { }
 
-export class StorageProvider implements vscode.TreeDataProvider<ProjectNode | TagNode> {
+export class StorageProvider implements vscode.TreeDataProvider<ProjectNode | TagNode | PathNode> {
 
-    public readonly onDidChangeTreeData: vscode.Event<ProjectNode | TagNode | void>;
+    public readonly onDidChangeTreeData: vscode.Event<ProjectNode | TagNode | PathNode | void>;
 
     private projectSource: ProjectStorage;
-    private internalOnDidChangeTreeData: vscode.EventEmitter<ProjectNode | TagNode | void> = new vscode.EventEmitter<ProjectNode | void>();
+    private internalOnDidChangeTreeData: vscode.EventEmitter<ProjectNode | TagNode | PathNode | void> = new vscode.EventEmitter<ProjectNode | void>();
     private static readonly TAGS_EXPANSION_STATE_KEY = "projectsExplorerFavorites.tagsExpansionState";
 
     constructor(projectSource: ProjectStorage) {
@@ -74,16 +121,23 @@ export class StorageProvider implements vscode.TreeDataProvider<ProjectNode | Ta
         this.internalOnDidChangeTreeData.fire();
     }
 
-    public getTreeItem(element: ProjectNode | TagNode): vscode.TreeItem {
+    public getTreeItem(element: ProjectNode | TagNode | PathNode): vscode.TreeItem {
         return element;
     }
 
-    public getChildren(element?: ProjectNode | TagNode): Thenable<ProjectNode[] | TagNode[]> {
+    public getChildren(element?: ProjectNode | TagNode | PathNode): Thenable<ProjectNode[] | TagNode[] | PathNode[]> {
 
         // loop !!!
         return new Promise(resolve => {
 
-            if (element) {
+            if (element instanceof ProjectNode) {
+                resolve(getProjectChildPaths(element.preview.path, element.preview.paths)
+                    .map(c => new PathNode(path.basename(c.fullPath), c.fullPath, c.browsable)));
+            } else if (element instanceof PathNode) {
+                resolve(element.browsable
+                    ? listTodoEntries(element.fullPath).map(c => new PathNode(path.basename(c.fullPath), c.fullPath, true))
+                    : []);
+            } else if (element) {
 
                 const nodes: ProjectNode[] = [];
 
@@ -110,11 +164,12 @@ export class StorageProvider implements vscode.TreeDataProvider<ProjectNode | Ta
                     const projectPath = PathUtils.expandHomePath(prj.description);
                     const gitBranch = (showGitBranch === "always" || showGitBranch === "onlyInSideBar") ? getGitBranch(projectPath) : undefined;
 
-                    nodes.push(new ProjectNode(prj.label, vscode.TreeItemCollapsibleState.None,
+                    nodes.push(new ProjectNode(prj.label, getProjectChildPaths(projectPath, prj.paths).length ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
                         iconFavorites, {
                             name: prj.label,
                             path: projectPath,
-                            detail: gitBranch
+                            detail: gitBranch,
+                            paths: prj.paths
                         }, {
                             command: "_projectManager.open",
                             title: "",
@@ -192,11 +247,12 @@ export class StorageProvider implements vscode.TreeDataProvider<ProjectNode | Ta
                     const projectPath = PathUtils.expandHomePath(prj.description);
                     const gitBranch = (showGitBranch === "always" || showGitBranch === "onlyInSideBar") ? getGitBranch(projectPath) : undefined;
 
-                    nodes.push(new ProjectNode(prj.label, vscode.TreeItemCollapsibleState.None,
+                    nodes.push(new ProjectNode(prj.label, getProjectChildPaths(projectPath, prj.paths).length ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
                         iconFavorites, {
                             name: prj.label,
                             path: projectPath,
-                            detail: gitBranch
+                            detail: gitBranch,
+                            paths: prj.paths
                         },
                         {
                             command: "_projectManager.open",
