@@ -270,6 +270,14 @@
 				"title": "%projectManager.commands.addToWorkspace#sideBar.title%"
 			},
 			{
+				"command": "_projectManager.copyPath#sideBar",
+				"title": "%projectManager.commands.copyPath#sideBar.title%"
+			},
+			{
+				"command": "_projectManager.copyRelativePath#sideBar",
+				"title": "%projectManager.commands.copyRelativePath#sideBar.title%"
+			},
+			{
 				"command": "_projectManager.revealInFinder#sideBar",
 				"title": "%projectManager.commands.revealInFinder#sideBar.title%"
 			},
@@ -349,6 +357,14 @@
 					"when": "false"
 				},
 				{
+					"command": "_projectManager.copyPath#sideBar",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.copyRelativePath#sideBar",
+					"when": "false"
+				},
+				{
 					"command": "_projectManager.revealInFinder#sideBar",
 					"when": "false"
 				},
@@ -359,6 +375,16 @@
 				{
 					"command": "_projectManager.revealInFileManager#sideBar",
 					"when": "false"
+				},
+				{
+					"command": "_projectManager.copyPath#sideBar",
+					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem == ProjectNodeKind",
+					"group": "cutcopypaste@1"
+				},
+				{
+					"command": "_projectManager.copyRelativePath#sideBar",
+					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem == ProjectNodeKind",
+					"group": "cutcopypaste@2"
 				},
 				{
 					"command": "_projectManager.deleteProject",

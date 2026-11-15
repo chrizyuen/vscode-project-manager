@@ -24,6 +24,7 @@ import { registerWhatsNew } from "./whats-new/commands";
 import { registerSupportProjectManager } from "./commands/supportProjectManager";
 import { registerHelpAndFeedbackView } from "./sidebar/helpAndFeedbackView";
 import { registerRevealFileInOS } from "./commands/revealFileInOS";
+import { registerCopyPath } from "./commands/copyPath";
 import { registerOpenSettings } from "./commands/openSettings";
 import { pickTags } from "./quickpick/tagsPicker";
 import { ViewFavoritesAs } from "./sidebar/constants";
@@ -57,6 +58,7 @@ export async function activate(context: vscode.ExtensionContext) {
     locators.setProviderManager(providerManager);
 
     registerRevealFileInOS();
+    registerCopyPath();
     registerOpenSettings();
     registerSupportProjectManager();
     registerHelpAndFeedbackView(context);
