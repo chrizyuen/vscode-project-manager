@@ -278,6 +278,10 @@
 				"title": "%projectManager.commands.copyRelativePath#sideBar.title%"
 			},
 			{
+				"command": "_projectManager.assignColor#sideBar",
+				"title": "%projectManager.commands.assignColor#sideBar.title%"
+			},
+			{
 				"command": "_projectManager.reloadWindow",
 				"title": "%projectManager.commands.reloadWindow.title%"
 			},
@@ -764,22 +768,27 @@
 				{
 					"command": "_projectManager.deleteProject",
 					"when": "view == projectsExplorerFavorites && viewItem == ProjectNodeKind",
-					"group": "favorites"
+					"group": "favorites@1"
 				},
 				{
 					"command": "_projectManager.renameProject",
 					"when": "view == projectsExplorerFavorites && viewItem == ProjectNodeKind",
-					"group": "favorites"
+					"group": "favorites@4"
+				},
+				{
+					"command": "_projectManager.assignColor#sideBar",
+					"when": "view == projectsExplorerFavorites && viewItem == ProjectNodeKind",
+					"group": "favorites@5"
 				},
 				{
 					"command": "_projectManager.editTags",
 					"when": "view == projectsExplorerFavorites && viewItem == ProjectNodeKind",
-					"group": "favorites"
+					"group": "favorites@3"
 				},
 				{
 					"command": "_projectManager.toggleProjectEnabled",
 					"when": "view == projectsExplorerFavorites && viewItem == ProjectNodeKind",
-					"group": "favorites"
+					"group": "favorites@2"
 				},
 				{
 					"command": "projectManager.addToFavorites",

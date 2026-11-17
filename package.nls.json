@@ -36,6 +36,7 @@
     "projectManager.commands.openInNewWindow.title": "Open in New Window",
     "projectManager.commands.copyPath#sideBar.title": "Copy Path",
     "projectManager.commands.copyRelativePath#sideBar.title": "Copy Relative Path",
+    "projectManager.commands.assignColor#sideBar.title": "Assign Color...",
     "projectManager.commands.reloadWindow.title": "Reload",
     "projectManager.commands.quickAccess.newFile.title": "New File...",
     "projectManager.commands.git.refresh#sideBar.title": "Refresh Git Changes",

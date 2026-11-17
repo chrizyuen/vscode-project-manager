@@ -3,6 +3,7 @@
 *  Licensed under the GPLv3 License. See License.md in the project root for license information.
 *--------------------------------------------------------------------------------------------*/
 
+import fs = require("fs");
 import path = require("path");
 import { IconPath, Uri, workspace } from "vscode";
 import { codicons } from "vscode-ext-codicons";
@@ -100,4 +101,24 @@ export function getIconDetailsFromProjectPath(projectPath: string): TooltipIconI
         icon: codicons.folder,
         title: "Folder"
     };
+}
+
+/** Reads the Peacock color (`peacock.color`) from a local project's `.vscode/settings.json`, if any. */
+export function getPeacockColor(projectPath: string): string | undefined {
+    if (isRemoteUri(Uri.file(projectPath)) || path.extname(projectPath) === ".code-workspace") {
+        return undefined;
+    }
+    try {
+        const content = fs.readFileSync(path.join(projectPath, ".vscode", "settings.json"), "utf8");
+        const match = /"peacock\.color"\s*:\s*"(#[0-9a-fA-F]{3,8})"/.exec(content);
+        return match ? match[1] : undefined;
+    } catch {
+        return undefined;
+    }
+}
+
+/** A folder icon filled with the given hex color, as a data URI. */
+export function getColoredFolderIcon(color: string): Uri {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path fill="${color}" d="M1.5 2h5l1 1h7a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5z"/></svg>`;
+    return Uri.parse(`data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`);
 }

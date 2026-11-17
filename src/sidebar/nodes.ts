@@ -7,7 +7,7 @@ import { Command, IconPath, MarkdownString, Position, Range, ThemeColor, ThemeIc
 import { getTagStyle, TodoItem } from "../todos/todos";
 import { describeGitStatus, GitChange } from "../git/changes";
 import { ThemeIcons } from "vscode-ext-codicons";
-import { currentIconThemeHasFolderIcon, getProjectIcon, getIconDetailsFromProjectPath } from "../utils/icons";
+import { currentIconThemeHasFolderIcon, getProjectIcon, getIconDetailsFromProjectPath, getPeacockColor, getColoredFolderIcon } from "../utils/icons";
 import * as fs from "fs";
 import * as path from "path";
 import { REMOTE_PREFIX, VIRTUAL_WORKSPACE_PREFIX } from "../utils/remote";
@@ -49,6 +49,13 @@ export class ProjectNode extends TreeItem {
     }
 
     private getIconPath(icon: string, projectPath: string): string | IconPath {
+        // folder projects use the project's Peacock color, when it has one
+        if (icon === "favorites" || icon === "Any") {
+            const peacockColor = getPeacockColor(projectPath);
+            if (peacockColor) {
+                return getColoredFolderIcon(peacockColor);
+            }
+        }
         if (currentIconThemeHasFolderIcon()) {
             return getProjectIcon(icon, projectPath);
         } else {
