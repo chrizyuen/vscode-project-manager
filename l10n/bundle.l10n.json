@@ -4,6 +4,13 @@
     "Could not open the project!": "Could not open the project!",
     "No TODOs found": "No TODOs found",
     "No changes": "No changes",
+    "{0} does not exist": "{0} does not exist",
+    "Cannot copy {0} into itself": "Cannot copy {0} into itself",
+    "Replace": "Replace",
+    "Keep Both": "Keep Both",
+    "{0} already exists in {1}.": "{0} already exists in {1}.",
+    "Could not copy {0}": "Could not copy {0}",
+    "{0} is inside the folder it would replace": "{0} is inside the folder it would replace",
     "{0} more changed files not shown": "{0} more changed files not shown",
     "No files yet. Right-click Quick Access to create one.": "No files yet. Right-click Quick Access to create one.",
     "New file in {0}": "New file in {0}",
@@ -56,5 +63,6 @@
     "filtered by tags": "filtered by tags",
     "Save the workspace first to save a project": "Save the workspace first to save a project",
     "Open a folder first to save a project": "Open a folder first to save a project",
-    "Save Project": "Save Project"
+    "Save Project": "Save Project",
+    "No local workspace folder is open to calculate a relative path": "No local workspace folder is open to calculate a relative path"
 }

@@ -9,6 +9,7 @@ import { ProjectStorage } from "../storage/storage";
 import { ProjectNode, TagNode } from "./nodes";
 import { AutodetectProvider } from "./autodetectProvider";
 import { StorageNode, StorageProvider } from "./storageProvider";
+import { QuickAccessDropController } from "./quickAccessDrop";
 import { Container } from "../core/container";
 import { l10n } from "vscode";
 
@@ -44,7 +45,8 @@ export class Providers {
 
         this.storageTreeView = vscode.window.createTreeView("projectsExplorerFavorites", {
             treeDataProvider: this.storageProvider,
-            showCollapseAll: true
+            showCollapseAll: true,
+            dragAndDropController: new QuickAccessDropController(() => this.storageProvider.refresh())
         });
         this.vscodeTreeView = vscode.window.createTreeView("projectsExplorerVSCode", {
             treeDataProvider: this.vscodeProvider,

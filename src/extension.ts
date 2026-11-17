@@ -162,6 +162,34 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.window.onDidChangeWindowState(state => state.focused && scheduleGitRefresh()),
         { dispose: () => gitRefreshTimer && clearTimeout(gitRefreshTimer) }
     );
+    // Open in Finder: folders open in a Finder window, files are revealed (selected) in theirs
+    const openPathInOS = async (node: { folder?: string; fullPath?: string; change?: { file: string }; item?: { file: string } }) => {
+        const target = node?.folder ?? node?.fullPath ?? node?.change?.file;
+        if (!target) {
+            return;
+        }
+        let isDirectory = false;
+        try {
+            isDirectory = fs.statSync(target).isDirectory();
+        } catch {
+            if (node.folder) {
+                // Quick Access folder not created yet
+                fs.mkdirSync(target, { recursive: true });
+                isDirectory = true;
+            } else {
+                vscode.window.showErrorMessage(l10n.t("{0} does not exist", target));
+                return;
+            }
+        }
+        if (isDirectory) {
+            await vscode.env.openExternal(vscode.Uri.file(target));
+        } else {
+            await vscode.commands.executeCommand("revealFileInOS", vscode.Uri.file(target));
+        }
+    };
+    vscode.commands.registerCommand("_projectManager.openInFinder#path", openPathInOS);
+    vscode.commands.registerCommand("_projectManager.openInExplorer#path", openPathInOS);
+    vscode.commands.registerCommand("_projectManager.openInFileManager#path", openPathInOS);
     vscode.commands.registerCommand("_projectManager.reloadWindow", () => vscode.commands.executeCommand("workbench.action.reloadWindow"));
     vscode.commands.registerCommand("_projectManager.deleteProject", (node) => deleteProject(node));
     vscode.commands.registerCommand("_projectManager.renameProject", (node) => renameProject(node));

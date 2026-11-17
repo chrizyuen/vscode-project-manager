@@ -8,17 +8,27 @@ import { Container } from "../core/container";
 import { isRemotePath } from "../utils/remote";
 import { ProjectNode } from "../sidebar/nodes";
 
-function getNodePath(node: ProjectNode): string | undefined {
-    return node?.command?.arguments?.[ 0 ];
+interface PathLikeNode {
+    command?: { arguments?: any[] };
+    folder?: string;
+    fullPath?: string;
+    change?: { file: string };
+    item?: { file: string };
+    roots?: string[];
+}
+function getNodePath(node: ProjectNode | PathLikeNode): string | undefined {
+    const n = node as PathLikeNode;
+    // project nodes carry the path in the command; Quick Access, path, TODO file and Git change nodes carry it directly
+    return n?.folder ?? n?.fullPath ?? n?.change?.file ?? n?.item?.file ?? n?.roots?.[ 0 ] ?? n?.command?.arguments?.[ 0 ];
 }
 
-async function copyPath(node: ProjectNode) {
+async function copyPath(node: ProjectNode | PathLikeNode) {
     const projectPath = getNodePath(node);
     if (!projectPath) { return; }
     await env.clipboard.writeText(projectPath);
 }
 
-async function copyRelativePath(node: ProjectNode) {
+async function copyRelativePath(node: ProjectNode | PathLikeNode) {
     const projectPath = getNodePath(node);
     if (!projectPath) { return; }
 

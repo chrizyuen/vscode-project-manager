@@ -292,6 +292,18 @@
 				"icon": "$(refresh)"
 			},
 			{
+				"command": "_projectManager.openInFinder#path",
+				"title": "%projectManager.commands.openInFinder#path.title%"
+			},
+			{
+				"command": "_projectManager.openInExplorer#path",
+				"title": "%projectManager.commands.openInExplorer#path.title%"
+			},
+			{
+				"command": "_projectManager.openInFileManager#path",
+				"title": "%projectManager.commands.openInFileManager#path.title%"
+			},
+			{
 				"command": "projectManager.todos.refresh",
 				"title": "%projectManager.commands.todos.refresh.title%"
 			},
@@ -400,6 +412,18 @@
 					"when": "false"
 				},
 				{
+					"command": "_projectManager.openInFinder#path",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.openInExplorer#path",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.openInFileManager#path",
+					"when": "false"
+				},
+				{
 					"command": "_projectManager.todos.refresh#sideBar",
 					"when": "false"
 				},
@@ -414,16 +438,6 @@
 				{
 					"command": "_projectManager.revealInFileManager#sideBar",
 					"when": "false"
-				},
-				{
-					"command": "_projectManager.copyPath#sideBar",
-					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem == ProjectNodeKind",
-					"group": "cutcopypaste@1"
-				},
-				{
-					"command": "_projectManager.copyRelativePath#sideBar",
-					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem == ProjectNodeKind",
-					"group": "cutcopypaste@2"
 				},
 				{
 					"command": "_projectManager.deleteProject",
@@ -658,6 +672,31 @@
 			],
 			"view/item/context": [
 				{
+					"command": "_projectManager.openInFinder#path",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoFileNodeKind|GitChangeNodeKind)$/ && isMac",
+					"group": "2_reveal"
+				},
+				{
+					"command": "_projectManager.openInExplorer#path",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoFileNodeKind|GitChangeNodeKind)$/ && isWindows",
+					"group": "2_reveal"
+				},
+				{
+					"command": "_projectManager.openInFileManager#path",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoFileNodeKind|GitChangeNodeKind)$/ && isLinux",
+					"group": "2_reveal"
+				},
+				{
+					"command": "_projectManager.copyPath#sideBar",
+					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoRootNodeKind|TodoFileNodeKind|TodoItemNodeKind|GitRootNodeKind|GitChangeNodeKind|GitChangeDeletedNodeKind)$/",
+					"group": "3_copy@1"
+				},
+				{
+					"command": "_projectManager.copyRelativePath#sideBar",
+					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoRootNodeKind|TodoFileNodeKind|TodoItemNodeKind|GitRootNodeKind|GitChangeNodeKind|GitChangeDeletedNodeKind)$/",
+					"group": "3_copy@2"
+				},
+				{
 					"command": "_projectManager.git.refresh#sideBar",
 					"when": "view == projectsExplorerFavorites && viewItem == GitRootNodeKind",
 					"group": "inline"
@@ -713,6 +752,16 @@
 					"group": "navigation@2"
 				},
 				{
+					"command": "_projectManager.copyPath#sideBar",
+					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem == ProjectNodeKind",
+					"group": "navigation@3"
+				},
+				{
+					"command": "_projectManager.copyRelativePath#sideBar",
+					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem == ProjectNodeKind",
+					"group": "navigation@4"
+				},
+				{
 					"command": "_projectManager.deleteProject",
 					"when": "view == projectsExplorerFavorites && viewItem == ProjectNodeKind",
 					"group": "favorites"
@@ -731,11 +780,6 @@
 					"command": "_projectManager.toggleProjectEnabled",
 					"when": "view == projectsExplorerFavorites && viewItem == ProjectNodeKind",
 					"group": "favorites"
-				},
-				{
-					"command": "projectManager.addToWorkspace#sideBar",
-					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem == ProjectNodeKind",
-					"group": "workspace"
 				},
 				{
 					"command": "projectManager.addToFavorites",
