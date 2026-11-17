@@ -37,6 +37,8 @@ import { registerSideBarDecorations } from "./sidebar/decoration";
 import { ProjectNode } from "./sidebar/nodes";
 import { Project } from "./core/project";
 import { ProjectManagerApiImpl } from "./api/apiImpl";
+import { todoCache } from "./todos/todos";
+import { registerTodoHighlight } from "./todos/highlight";
 
 let locators: Locators;
 
@@ -122,6 +124,20 @@ export async function activate(context: vscode.ExtensionContext) {
     // new commands (ActivityBar)
     vscode.commands.registerCommand("projectManager.addToWorkspace#sideBar", (node) => addProjectToWorkspace(node));
     vscode.commands.registerCommand("projectManager.addToWorkspace", () => addProjectToWorkspace(undefined));
+    vscode.commands.registerCommand("projectManager.todos.refresh", () => todoCache.clear());
+    vscode.commands.registerCommand("_projectManager.todos.refresh#sideBar", () => todoCache.clear());
+    registerTodoHighlight(context);
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(doc => doc.uri.scheme === "file" && todoCache.invalidateFile(doc.uri.fsPath)),
+        vscode.workspace.onDidCreateFiles(e => e.files.forEach(f => f.scheme === "file" && todoCache.invalidateFile(f.fsPath))),
+        vscode.workspace.onDidDeleteFiles(e => e.files.forEach(f => f.scheme === "file" && todoCache.invalidateFile(f.fsPath))),
+        vscode.workspace.onDidRenameFiles(e => e.files.forEach(f => {
+            if (f.oldUri.scheme === "file") { todoCache.invalidateFile(f.oldUri.fsPath); }
+            if (f.newUri.scheme === "file") { todoCache.invalidateFile(f.newUri.fsPath); }
+        })),
+        vscode.workspace.onDidChangeConfiguration(cfg => cfg.affectsConfiguration("projectManager.todos") && todoCache.clear())
+    );
+    vscode.commands.registerCommand("_projectManager.reloadWindow", () => vscode.commands.executeCommand("workbench.action.reloadWindow"));
     vscode.commands.registerCommand("_projectManager.deleteProject", (node) => deleteProject(node));
     vscode.commands.registerCommand("_projectManager.renameProject", (node) => renameProject(node));
     vscode.commands.registerCommand("_projectManager.editTags", (node) => editTags(node));

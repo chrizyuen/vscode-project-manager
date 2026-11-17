@@ -3,7 +3,8 @@
 *  Licensed under the GPLv3 License. See License.md in the project root for license information.
 *--------------------------------------------------------------------------------------------*/
 
-import { Command, IconPath, MarkdownString, ThemeColor, ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
+import { Command, IconPath, MarkdownString, Position, Range, ThemeColor, ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
+import { getTagStyle, TodoItem } from "../todos/todos";
 import { ThemeIcons } from "vscode-ext-codicons";
 import { currentIconThemeHasFolderIcon, getProjectIcon, getIconDetailsFromProjectPath } from "../utils/icons";
 import * as fs from "fs";
@@ -15,6 +16,7 @@ export interface ProjectPreview {
     path: string;
     detail?: string;
     paths?: string[];
+    tags?: string[];
 }
 
 export class ProjectNode extends TreeItem {
@@ -131,7 +133,7 @@ export class NoTagNode extends TagNode {
  * folders (those inside `.todo`) expand in place to show their own contents.
  */
 export class PathNode extends TreeItem {
-    constructor(public readonly label: string, public readonly fullPath: string, public readonly browsable = false) {
+    constructor(public readonly label: string, public readonly fullPath: string, public readonly browsable = false, public readonly plan = false) {
         super(label, TreeItemCollapsibleState.None);
         this.contextValue = "PathNodeKind";
         this.tooltip = fullPath;
@@ -152,5 +154,54 @@ export class PathNode extends TreeItem {
             this.iconPath = ThemeIcons.file;
             this.command = { command: "vscode.open", title: "", arguments: [ Uri.file(fullPath) ] };
         }
+    }
+}
+
+/**
+ * The "TODOs" node under a project: expands to the files containing TODO tags
+ * in the project's folders (root folder, or the folders of a `.code-workspace`).
+ */
+export class TodoRootNode extends TreeItem {
+    constructor(public readonly projectName: string, public readonly roots: string[], count?: number) {
+        super("TODOs", TreeItemCollapsibleState.Collapsed);
+        this.id = `todos:${projectName}:${roots.join("|")}`;
+        this.contextValue = "TodoRootNodeKind";
+        this.iconPath = new ThemeIcon("checklist");
+        this.tooltip = roots.join("\n");
+        if (count !== undefined) {
+            this.description = `${count}`;
+        }
+    }
+}
+
+/** A file with TODO items, under a project's TODOs node. */
+export class TodoFileNode extends TreeItem {
+    constructor(public readonly parentId: string, public readonly fullPath: string, label: string, public readonly items: TodoItem[]) {
+        super(label, TreeItemCollapsibleState.Collapsed);
+        this.id = `${parentId}:${fullPath}`;
+        this.contextValue = "TodoFileNodeKind";
+        this.resourceUri = Uri.file(fullPath);
+        this.iconPath = ThemeIcon.File;
+        this.description = `${items.length}`;
+        this.tooltip = fullPath;
+    }
+}
+
+/** A single TODO item: clicking it opens the file at the tag. */
+export class TodoItemNode extends TreeItem {
+    constructor(parentId: string, public readonly item: TodoItem) {
+        super(item.text || item.tag, TreeItemCollapsibleState.None);
+        this.id = `${parentId}:${item.line}:${item.column}`;
+        this.contextValue = "TodoItemNodeKind";
+        const style = getTagStyle(item.tag);
+        this.iconPath = new ThemeIcon(style.icon, new ThemeColor(style.color));
+        this.description = item.text ? `${item.tag} · line ${item.line + 1}` : `line ${item.line + 1}`;
+        this.tooltip = new MarkdownString(`**${item.tag}** ${item.text}\n\n_${item.file}:${item.line + 1}_`);
+        const position = new Position(item.line, item.column);
+        this.command = {
+            command: "vscode.open",
+            title: "",
+            arguments: [ Uri.file(item.file), { selection: new Range(position, position) } ]
+        };
     }
 }

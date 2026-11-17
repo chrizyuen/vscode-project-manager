@@ -278,6 +278,19 @@
 				"title": "%projectManager.commands.copyRelativePath#sideBar.title%"
 			},
 			{
+				"command": "_projectManager.reloadWindow",
+				"title": "%projectManager.commands.reloadWindow.title%"
+			},
+			{
+				"command": "projectManager.todos.refresh",
+				"title": "%projectManager.commands.todos.refresh.title%"
+			},
+			{
+				"command": "_projectManager.todos.refresh#sideBar",
+				"title": "%projectManager.commands.todos.refresh#sideBar.title%",
+				"icon": "$(refresh)"
+			},
+			{
 				"command": "_projectManager.revealInFinder#sideBar",
 				"title": "%projectManager.commands.revealInFinder#sideBar.title%"
 			},
@@ -362,6 +375,14 @@
 				},
 				{
 					"command": "_projectManager.copyRelativePath#sideBar",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.reloadWindow",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.todos.refresh#sideBar",
 					"when": "false"
 				},
 				{
@@ -618,6 +639,16 @@
 				}
 			],
 			"view/item/context": [
+				{
+					"command": "_projectManager.todos.refresh#sideBar",
+					"when": "view == projectsExplorerFavorites && viewItem == TodoRootNodeKind",
+					"group": "inline"
+				},
+				{
+					"command": "_projectManager.reloadWindow",
+					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/",
+					"group": "z_reload"
+				},
 				{
 					"command": "_projectManager.openInNewWindow",
 					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem == ProjectNodeKind",
@@ -887,6 +918,70 @@
 						],
 						"default": "never",
 						"description": "%projectManager.configuration.git.showBranchName.description%"
+					}
+				}
+			},
+			{
+				"id": "projectManager-todos",
+				"title": "TODOs",
+				"properties": {
+					"projectManager.todos.enabled": {
+						"type": "boolean",
+						"default": true,
+						"description": "%projectManager.configuration.todos.enabled.description%"
+					},
+					"projectManager.todos.tags": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [
+							"TODO",
+							"FIXME",
+							"BUG",
+							"HACK",
+							"XXX",
+							"[ ]",
+							"[x]"
+						],
+						"description": "%projectManager.configuration.todos.tags.description%"
+					},
+					"projectManager.todos.regex": {
+						"type": "string",
+						"default": "(//|#|<!--|;|/\\*|^|^[ \\t]*(-|\\d+.))\\s*($TAGS)",
+						"description": "%projectManager.configuration.todos.regex.description%"
+					},
+					"projectManager.todos.caseSensitive": {
+						"type": "boolean",
+						"default": true,
+						"description": "%projectManager.configuration.todos.caseSensitive.description%"
+					},
+					"projectManager.todos.includeGlobs": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [],
+						"description": "%projectManager.configuration.todos.includeGlobs.description%"
+					},
+					"projectManager.todos.excludeGlobs": {
+						"type": "array",
+						"items": {
+							"type": "string"
+						},
+						"default": [],
+						"description": "%projectManager.configuration.todos.excludeGlobs.description%"
+					},
+					"projectManager.todos.maxResults": {
+						"type": "number",
+						"default": 5000,
+						"minimum": 1,
+						"description": "%projectManager.configuration.todos.maxResults.description%"
+					},
+					"projectManager.todos.highlight": {
+						"type": "boolean",
+						"default": true,
+						"description": "%projectManager.configuration.todos.highlight.description%"
 					}
 				}
 			},
