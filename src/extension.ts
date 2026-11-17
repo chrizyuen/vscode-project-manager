@@ -145,6 +145,23 @@ export async function activate(context: vscode.ExtensionContext) {
         vscode.workspace.onDidChangeConfiguration(cfg => cfg.affectsConfiguration("projectManager.todos") && todoCache.clear())
     );
     vscode.commands.registerCommand("_projectManager.quickAccess.newFile", (node: { folder?: string; fullPath?: string }) => newQuickAccessFile(node?.folder ?? node?.fullPath));
+    // GIT group: re-read `git status` when files change or the window regains focus
+    let gitRefreshTimer: NodeJS.Timeout | undefined;
+    const scheduleGitRefresh = () => {
+        if (gitRefreshTimer) {
+            clearTimeout(gitRefreshTimer);
+        }
+        gitRefreshTimer = setTimeout(() => providerManager.storageProvider.refresh(), 500);
+    };
+    vscode.commands.registerCommand("_projectManager.git.refresh#sideBar", () => providerManager.storageProvider.refresh());
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(scheduleGitRefresh),
+        vscode.workspace.onDidCreateFiles(scheduleGitRefresh),
+        vscode.workspace.onDidDeleteFiles(scheduleGitRefresh),
+        vscode.workspace.onDidRenameFiles(scheduleGitRefresh),
+        vscode.window.onDidChangeWindowState(state => state.focused && scheduleGitRefresh()),
+        { dispose: () => gitRefreshTimer && clearTimeout(gitRefreshTimer) }
+    );
     vscode.commands.registerCommand("_projectManager.reloadWindow", () => vscode.commands.executeCommand("workbench.action.reloadWindow"));
     vscode.commands.registerCommand("_projectManager.deleteProject", (node) => deleteProject(node));
     vscode.commands.registerCommand("_projectManager.renameProject", (node) => renameProject(node));

@@ -13,10 +13,11 @@ import { isRemotePath } from "../utils/remote";
 import { sortProjects } from "../utils/sorter";
 import { getGitBranch } from "../utils/git";
 import { NO_TAGS_DEFINED } from "./constants";
-import { NoTagNode, PathNode, ProjectNode, QuickAccessNode, TagNode, TodoFileNode, TodoItemNode, TodoRootNode } from "./nodes";
+import { GitChangeNode, GitRootNode, NoTagNode, PathNode, ProjectNode, QuickAccessNode, TagNode, TodoFileNode, TodoItemNode, TodoRootNode } from "./nodes";
+import { getGitChanges, MAX_GIT_CHANGES } from "../git/changes";
 import { getTodoConfig, todoCache, TodoItem } from "../todos/todos";
 
-export type StorageNode = ProjectNode | TagNode | PathNode | QuickAccessNode | TodoRootNode | TodoFileNode | TodoItemNode | vscode.TreeItem;
+export type StorageNode = ProjectNode | TagNode | PathNode | QuickAccessNode | GitRootNode | GitChangeNode | TodoRootNode | TodoFileNode | TodoItemNode | vscode.TreeItem;
 
 const TODO_FOLDER = ".todo";
 const IGNORED_TODO_ENTRIES = new Set([ ".DS_Store" ]);
@@ -149,6 +150,19 @@ function getTodoRoots(projectPath: string, projectName: string, planRoots: strin
     return [ ...new Set(roots.map(r => path.resolve(r))) ].filter(isDirectory);
 }
 
+/**
+ * Folders checked for git changes for a project: its root folder, or the
+ * local folders of a `.code-workspace` file. Remote projects have none.
+ */
+function getGitRoots(projectPath: string): string[] {
+    if (isRemotePath(projectPath)) {
+        return [];
+    }
+    const rootPath = PathUtils.expandHomePath(projectPath);
+    const roots = path.extname(rootPath) === ".code-workspace" ? listWorkspaceFolders(rootPath) : [ rootPath ];
+    return [ ...new Set(roots.map(r => path.resolve(r))) ].filter(isDirectory);
+}
+
 /** Label prefix for files under `root`: plan folders show their path inside the plan project. */
 function getRootLabel(root: string, planRoots: string[]): string {
     for (const planRoot of planRoots) {
@@ -265,9 +279,17 @@ export class StorageProvider implements vscode.TreeDataProvider<StorageNode> {
             const count = roots.every(r => todoCache.isScanned(r)) ? (await todoCache.getAll(roots)).length : undefined;
             nodes.unshift(new TodoRootNode(element.preview.name, roots, count));
         }
+        let groupIndex = roots.length ? 1 : 0;
         const quickAccess = getQuickAccessFolder(element.preview.path);
         if (quickAccess) {
-            nodes.splice(roots.length ? 1 : 0, 0, new QuickAccessNode(element.preview.name, quickAccess));
+            nodes.splice(groupIndex++, 0, new QuickAccessNode(element.preview.name, quickAccess));
+        }
+        // GIT shows only for projects whose folders are in a git repository
+        const gitRoots = getGitRoots(element.preview.path);
+        const isRepo = await Promise.all(gitRoots.map(async r => (await getGitChanges(r)) !== undefined));
+        const repoRoots = gitRoots.filter((_, i) => isRepo[ i ]);
+        if (repoRoots.length) {
+            nodes.splice(groupIndex, 0, new GitRootNode(element.preview.name, repoRoots));
         }
         return nodes;
     }
@@ -285,6 +307,26 @@ export class StorageProvider implements vscode.TreeDataProvider<StorageNode> {
         return groupTodosByFile(element.id as string, element.roots, this.getPlanRoots(), items);
     }
 
+    private async getGitChildren(element: GitRootNode): Promise<StorageNode[]> {
+        const changes = (await Promise.all(element.roots.map(r => getGitChanges(r)))).flatMap(c => c ?? []);
+        if (changes.length === 0) {
+            const empty = new vscode.TreeItem(vscode.l10n.t("No changes"));
+            empty.id = `${element.id}:empty`;
+            return [ empty ];
+        }
+        const multiRoot = element.roots.length > 1;
+        const nodes: StorageNode[] = changes.slice(0, MAX_GIT_CHANGES).map(change => {
+            const rel = path.relative(change.root, change.file);
+            return new GitChangeNode(element.id as string, change, multiRoot ? path.join(path.basename(change.root), rel) : rel);
+        });
+        if (changes.length > MAX_GIT_CHANGES) {
+            const more = new vscode.TreeItem(vscode.l10n.t("{0} more changed files not shown", changes.length - MAX_GIT_CHANGES));
+            more.id = `${element.id}:more`;
+            nodes.push(more);
+        }
+        return nodes;
+    }
+
     public getChildren(element?: StorageNode): Thenable<StorageNode[]> {
 
         if (element instanceof ProjectNode) {
@@ -292,6 +334,12 @@ export class StorageProvider implements vscode.TreeDataProvider<StorageNode> {
         }
         if (element instanceof TodoRootNode || element instanceof TodoFileNode) {
             return this.getTodoChildren(element);
+        }
+        if (element instanceof GitRootNode) {
+            return this.getGitChildren(element);
+        }
+        if (element instanceof GitChangeNode) {
+            return Promise.resolve([]);
         }
         if (element instanceof QuickAccessNode) {
             const entries = listTodoEntries(element.folder);

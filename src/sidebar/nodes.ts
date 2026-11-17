@@ -5,6 +5,7 @@
 
 import { Command, IconPath, MarkdownString, Position, Range, ThemeColor, ThemeIcon, TreeItem, TreeItemCollapsibleState, Uri } from "vscode";
 import { getTagStyle, TodoItem } from "../todos/todos";
+import { describeGitStatus, GitChange } from "../git/changes";
 import { ThemeIcons } from "vscode-ext-codicons";
 import { currentIconThemeHasFolderIcon, getProjectIcon, getIconDetailsFromProjectPath } from "../utils/icons";
 import * as fs from "fs";
@@ -161,6 +162,41 @@ export class PathNode extends TreeItem {
 export const GROUP_URI_SCHEME = "projectManager-group";
 export const TODOS_GROUP_COLOR = "projectManager.sideBar.todosGroupForeground";
 export const QUICK_ACCESS_GROUP_COLOR = "projectManager.sideBar.quickAccessGroupForeground";
+export const GIT_GROUP_COLOR = "projectManager.sideBar.gitGroupForeground";
+/** URI scheme of changed-file nodes under GIT, used to show their status letter and color. */
+export const GIT_CHANGE_URI_SCHEME = "projectManager-gitChange";
+
+/** The "GIT" node under a project: expands to the files with uncommitted changes. */
+export class GitRootNode extends TreeItem {
+    constructor(public readonly projectName: string, public readonly roots: string[]) {
+        super("GIT", TreeItemCollapsibleState.Collapsed);
+        this.id = `git:${projectName}:${roots.join("|")}`;
+        this.contextValue = "GitRootNodeKind";
+        this.iconPath = new ThemeIcon("source-control", new ThemeColor(GIT_GROUP_COLOR));
+        this.resourceUri = Uri.from({ scheme: GROUP_URI_SCHEME, path: "/git", query: this.id });
+        this.tooltip = roots.join("\n");
+    }
+}
+
+/** A changed file under GIT: clicking opens it in the current window. */
+export class GitChangeNode extends TreeItem {
+    constructor(parentId: string, public readonly change: GitChange, label: string) {
+        super(label, TreeItemCollapsibleState.None);
+        const info = describeGitStatus(change.status);
+        this.id = `${parentId}:${change.file}`;
+        this.contextValue = info.deleted ? "GitChangeDeletedNodeKind" : "GitChangeNodeKind";
+        this.iconPath = ThemeIcon.File;
+        // custom scheme: the file icon still follows the file name; the decoration adds the status letter
+        this.resourceUri = Uri.from({ scheme: GIT_CHANGE_URI_SCHEME, path: Uri.file(change.file).path, query: change.status });
+        const dir = path.dirname(label);
+        this.description = dir === "." ? undefined : dir;
+        this.label = path.basename(label);
+        this.tooltip = `${change.file}\n${info.label}${change.originalFile ? ` (from ${change.originalFile})` : ""}`;
+        if (!info.deleted) {
+            this.command = { command: "vscode.open", title: "", arguments: [ Uri.file(change.file) ] };
+        }
+    }
+}
 
 /**
  * The "Quick Access" node under a project: expands to the contents of the

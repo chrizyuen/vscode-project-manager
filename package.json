@@ -287,6 +287,11 @@
 				"icon": "$(new-file)"
 			},
 			{
+				"command": "_projectManager.git.refresh#sideBar",
+				"title": "%projectManager.commands.git.refresh#sideBar.title%",
+				"icon": "$(refresh)"
+			},
+			{
 				"command": "projectManager.todos.refresh",
 				"title": "%projectManager.commands.todos.refresh.title%"
 			},
@@ -388,6 +393,10 @@
 				},
 				{
 					"command": "_projectManager.quickAccess.newFile",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.git.refresh#sideBar",
 					"when": "false"
 				},
 				{
@@ -648,6 +657,11 @@
 				}
 			],
 			"view/item/context": [
+				{
+					"command": "_projectManager.git.refresh#sideBar",
+					"when": "view == projectsExplorerFavorites && viewItem == GitRootNodeKind",
+					"group": "inline"
+				},
 				{
 					"command": "_projectManager.quickAccess.newFile",
 					"when": "view == projectsExplorerFavorites && viewItem =~ /^QuickAccess(Node|Folder)Kind$/",
@@ -1189,6 +1203,15 @@
 					"light": "#b8860b",
 					"dark": "#e2c08d",
 					"highContrast": "#e2c08d"
+				}
+			},
+			{
+				"id": "projectManager.sideBar.gitGroupForeground",
+				"description": "%projectManager.colors.sideBar.gitGroupForeground.description%",
+				"defaults": {
+					"light": "#c4401f",
+					"dark": "#f1502f",
+					"highContrast": "#f1502f"
 				}
 			},
 			{
