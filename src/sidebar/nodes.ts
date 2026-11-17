@@ -159,6 +159,10 @@ export class PathNode extends TreeItem {
             this.iconPath = ThemeIcons.folder;
             this.command = { command: "_projectManager.openOnClick", title: "", arguments: [ fullPath, path.basename(fullPath), "" ] };
         } else {
+            if (browsable) {
+                // a file inside Quick Access: can be renamed and deleted
+                this.contextValue = "QuickAccessFileKind";
+            }
             this.iconPath = ThemeIcons.file;
             this.command = { command: "vscode.open", title: "", arguments: [ Uri.file(fullPath) ] };
         }

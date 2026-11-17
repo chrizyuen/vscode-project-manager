@@ -146,6 +146,8 @@ export async function activate(context: vscode.ExtensionContext) {
         })),
         vscode.workspace.onDidChangeConfiguration(cfg => cfg.affectsConfiguration("projectManager.todos") && todoCache.clear())
     );
+    vscode.commands.registerCommand("_projectManager.quickAccess.rename", (node: { fullPath?: string }) => renameQuickAccessEntry(node));
+    vscode.commands.registerCommand("_projectManager.quickAccess.delete", (node: { fullPath?: string }) => deleteQuickAccessEntry(node));
     vscode.commands.registerCommand("_projectManager.quickAccess.newFile", (node: { folder?: string; fullPath?: string }) => newQuickAccessFile(node?.folder ?? node?.fullPath));
     // GIT group: re-read `git status` when files change or the window regains focus
     let gitRefreshTimer: NodeJS.Timeout | undefined;
@@ -207,6 +209,65 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("projectManager.filterProjectsByTag#sideBar", () => filterProjectsByTag());
 
     /** Asks for a file name, creates it under `folder` (creating folders as needed) and opens it. */
+    async function renameQuickAccessEntry(node: { fullPath?: string }) {
+        const source = node?.fullPath;
+        if (!source) {
+            return;
+        }
+        const parent = path.dirname(source);
+        const oldName = path.basename(source);
+        const newName = await vscode.window.showInputBox({
+            prompt: l10n.t("Rename {0}", oldName),
+            value: oldName,
+            valueSelection: [ 0, oldName.lastIndexOf(".") > 0 ? oldName.lastIndexOf(".") : oldName.length ],
+            validateInput: value => {
+                const trimmed = value.trim();
+                if (!trimmed) {
+                    return l10n.t("Enter a file name");
+                }
+                if (trimmed === oldName) {
+                    return undefined;
+                }
+                if (trimmed.includes("/") || trimmed.includes("\\")) {
+                    return l10n.t("The name cannot contain path separators");
+                }
+                if (fs.existsSync(path.join(parent, trimmed))) {
+                    return l10n.t("{0} already exists", trimmed);
+                }
+                return undefined;
+            }
+        });
+        if (!newName || newName.trim() === oldName) {
+            return;
+        }
+        const edit = new vscode.WorkspaceEdit();
+        edit.renameFile(vscode.Uri.file(source), vscode.Uri.file(path.join(parent, newName.trim())));
+        if (!await vscode.workspace.applyEdit(edit)) {
+            vscode.window.showErrorMessage(l10n.t("Could not rename {0}", source));
+            return;
+        }
+        providerManager.storageProvider.refresh();
+    }
+    async function deleteQuickAccessEntry(node: { fullPath?: string }) {
+        const target = node?.fullPath;
+        if (!target) {
+            return;
+        }
+        const moveToTrash = l10n.t("Move to Trash");
+        const answer = await vscode.window.showWarningMessage(
+            l10n.t("Are you sure you want to delete '{0}'?", path.basename(target)),
+            { modal: true, detail: target }, moveToTrash);
+        if (answer !== moveToTrash) {
+            return;
+        }
+        try {
+            await vscode.workspace.fs.delete(vscode.Uri.file(target), { recursive: true, useTrash: true });
+        } catch (error) {
+            vscode.window.showErrorMessage(l10n.t("Could not delete {0}: {1}", target, String(error)));
+            return;
+        }
+        providerManager.storageProvider.refresh();
+    }
     async function newQuickAccessFile(folder: string | undefined) {
         if (!folder) {
             return;

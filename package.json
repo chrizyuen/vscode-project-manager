@@ -291,6 +291,14 @@
 				"icon": "$(new-file)"
 			},
 			{
+				"command": "_projectManager.quickAccess.rename",
+				"title": "%projectManager.commands.quickAccess.rename.title%"
+			},
+			{
+				"command": "_projectManager.quickAccess.delete",
+				"title": "%projectManager.commands.quickAccess.delete.title%"
+			},
+			{
 				"command": "_projectManager.git.refresh#sideBar",
 				"title": "%projectManager.commands.git.refresh#sideBar.title%",
 				"icon": "$(refresh)"
@@ -409,6 +417,14 @@
 				},
 				{
 					"command": "_projectManager.quickAccess.newFile",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.quickAccess.rename",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.quickAccess.delete",
 					"when": "false"
 				},
 				{
@@ -677,27 +693,27 @@
 			"view/item/context": [
 				{
 					"command": "_projectManager.openInFinder#path",
-					"when": "view == projectsExplorerFavorites && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoFileNodeKind|GitChangeNodeKind)$/ && isMac",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|QuickAccessFileKind|PathNodeKind|TodoFileNodeKind|GitChangeNodeKind)$/ && isMac",
 					"group": "2_reveal"
 				},
 				{
 					"command": "_projectManager.openInExplorer#path",
-					"when": "view == projectsExplorerFavorites && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoFileNodeKind|GitChangeNodeKind)$/ && isWindows",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|QuickAccessFileKind|PathNodeKind|TodoFileNodeKind|GitChangeNodeKind)$/ && isWindows",
 					"group": "2_reveal"
 				},
 				{
 					"command": "_projectManager.openInFileManager#path",
-					"when": "view == projectsExplorerFavorites && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoFileNodeKind|GitChangeNodeKind)$/ && isLinux",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|QuickAccessFileKind|PathNodeKind|TodoFileNodeKind|GitChangeNodeKind)$/ && isLinux",
 					"group": "2_reveal"
 				},
 				{
 					"command": "_projectManager.copyPath#sideBar",
-					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoRootNodeKind|TodoFileNodeKind|TodoItemNodeKind|GitRootNodeKind|GitChangeNodeKind|GitChangeDeletedNodeKind)$/",
+					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|QuickAccessFileKind|PathNodeKind|TodoRootNodeKind|TodoFileNodeKind|TodoItemNodeKind|GitRootNodeKind|GitChangeNodeKind|GitChangeDeletedNodeKind)$/",
 					"group": "3_copy@1"
 				},
 				{
 					"command": "_projectManager.copyRelativePath#sideBar",
-					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|PathNodeKind|TodoRootNodeKind|TodoFileNodeKind|TodoItemNodeKind|GitRootNodeKind|GitChangeNodeKind|GitChangeDeletedNodeKind)$/",
+					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|QuickAccessFileKind|PathNodeKind|TodoRootNodeKind|TodoFileNodeKind|TodoItemNodeKind|GitRootNodeKind|GitChangeNodeKind|GitChangeDeletedNodeKind)$/",
 					"group": "3_copy@2"
 				},
 				{
@@ -714,6 +730,16 @@
 					"command": "_projectManager.quickAccess.newFile",
 					"when": "view == projectsExplorerFavorites && viewItem =~ /^QuickAccess(Node|Folder)Kind$/",
 					"group": "inline"
+				},
+				{
+					"command": "_projectManager.quickAccess.rename",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^QuickAccess(Folder|File)Kind$/",
+					"group": "2_quickAccessEdit@1"
+				},
+				{
+					"command": "_projectManager.quickAccess.delete",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^QuickAccess(Folder|File)Kind$/",
+					"group": "2_quickAccessEdit@2"
 				},
 				{
 					"command": "_projectManager.todos.refresh#sideBar",
