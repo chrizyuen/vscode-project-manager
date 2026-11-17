@@ -109,14 +109,13 @@ function getProjectChildPaths(projectPath: string, paths?: string[]): ChildPath[
     return result;
 }
 
-/** The `<rootPath>/.todo` folder of a local, non-workspace project, if it has entries. */
+/** The `<rootPath>/.todo` folder of a local, non-workspace project (it may not exist yet). */
 function getQuickAccessFolder(projectPath: string): string | undefined {
     const rootPath = PathUtils.expandHomePath(projectPath);
     if (isRemotePath(projectPath) || path.extname(rootPath) === ".code-workspace") {
         return undefined;
     }
-    const folder = path.join(rootPath, TODO_FOLDER);
-    return listTodoEntries(folder).length > 0 ? folder : undefined;
+    return path.join(rootPath, TODO_FOLDER);
 }
 
 function isDirectory(p: string): boolean {
@@ -295,8 +294,13 @@ export class StorageProvider implements vscode.TreeDataProvider<StorageNode> {
             return this.getTodoChildren(element);
         }
         if (element instanceof QuickAccessNode) {
-            return Promise.resolve(listTodoEntries(element.folder)
-                .map(c => new PathNode(path.basename(c.fullPath), c.fullPath, true)));
+            const entries = listTodoEntries(element.folder);
+            if (entries.length === 0) {
+                const empty = new vscode.TreeItem(vscode.l10n.t("No files yet. Right-click Quick Access to create one."));
+                empty.id = `${element.id}:empty`;
+                return Promise.resolve([ empty ]);
+            }
+            return Promise.resolve(entries.map(c => new PathNode(path.basename(c.fullPath), c.fullPath, true)));
         }
         if (element instanceof TodoItemNode) {
             return Promise.resolve([]);

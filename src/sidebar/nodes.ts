@@ -145,6 +145,7 @@ export class PathNode extends TreeItem {
         }
         if (isDirectory && browsable) {
             this.collapsibleState = TreeItemCollapsibleState.Collapsed;
+            this.contextValue = "QuickAccessFolderKind";
             this.iconPath = ThemeIcons.folder;
         } else if (isDirectory) {
             this.iconPath = ThemeIcons.folder;

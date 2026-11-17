@@ -37,6 +37,7 @@
     "projectManager.commands.copyPath#sideBar.title": "Copy Path",
     "projectManager.commands.copyRelativePath#sideBar.title": "Copy Relative Path",
     "projectManager.commands.reloadWindow.title": "Reload",
+    "projectManager.commands.quickAccess.newFile.title": "New File...",
     "projectManager.commands.todos.refresh.title": "Project Manager: Refresh TODOs",
     "projectManager.commands.todos.refresh#sideBar.title": "Refresh TODOs",
     "projectManager.configuration.todos.enabled.description": "Show a TODOs node under each project, listing comment tags found in the project's folders",

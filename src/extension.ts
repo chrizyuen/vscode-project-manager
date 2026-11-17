@@ -144,6 +144,7 @@ export async function activate(context: vscode.ExtensionContext) {
         })),
         vscode.workspace.onDidChangeConfiguration(cfg => cfg.affectsConfiguration("projectManager.todos") && todoCache.clear())
     );
+    vscode.commands.registerCommand("_projectManager.quickAccess.newFile", (node: { folder?: string; fullPath?: string }) => newQuickAccessFile(node?.folder ?? node?.fullPath));
     vscode.commands.registerCommand("_projectManager.reloadWindow", () => vscode.commands.executeCommand("workbench.action.reloadWindow"));
     vscode.commands.registerCommand("_projectManager.deleteProject", (node) => deleteProject(node));
     vscode.commands.registerCommand("_projectManager.renameProject", (node) => renameProject(node));
@@ -157,6 +158,45 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("_projectManager.viewAsList#sideBarFavorites", () => toggleViewAsFavoriteProjects(ViewFavoritesAs.VIEW_AS_LIST));
     vscode.commands.registerCommand("projectManager.filterProjectsByTag", () => filterProjectsByTag());
     vscode.commands.registerCommand("projectManager.filterProjectsByTag#sideBar", () => filterProjectsByTag());
+
+    /** Asks for a file name, creates it under `folder` (creating folders as needed) and opens it. */
+    async function newQuickAccessFile(folder: string | undefined) {
+        if (!folder) {
+            return;
+        }
+        const name = await vscode.window.showInputBox({
+            prompt: l10n.t("New file in {0}", folder),
+            placeHolder: "notes.md",
+            validateInput: value => {
+                const trimmed = value.trim();
+                if (!trimmed) {
+                    return l10n.t("Enter a file name");
+                }
+                const target = path.resolve(folder, trimmed);
+                const rel = path.relative(folder, target);
+                if (!rel || rel.startsWith("..") || path.isAbsolute(rel)) {
+                    return l10n.t("The file must be inside {0}", folder);
+                }
+                if (fs.existsSync(target)) {
+                    return l10n.t("{0} already exists", trimmed);
+                }
+                return undefined;
+            }
+        });
+        if (!name) {
+            return;
+        }
+        const target = path.resolve(folder, name.trim());
+        try {
+            fs.mkdirSync(path.dirname(target), { recursive: true });
+            fs.writeFileSync(target, "", { flag: "wx" });
+        } catch (error) {
+            vscode.window.showErrorMessage(l10n.t("Could not create {0}: {1}", target, String(error)));
+            return;
+        }
+        providerManager.storageProvider.refresh();
+        await vscode.window.showTextDocument(vscode.Uri.file(target));
+    }
 
     function toggleViewAsFavoriteProjects(view: ViewFavoritesAs) {
         if (view === ViewFavoritesAs.VIEW_AS_LIST) {

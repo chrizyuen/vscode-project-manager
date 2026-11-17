@@ -282,6 +282,11 @@
 				"title": "%projectManager.commands.reloadWindow.title%"
 			},
 			{
+				"command": "_projectManager.quickAccess.newFile",
+				"title": "%projectManager.commands.quickAccess.newFile.title%",
+				"icon": "$(new-file)"
+			},
+			{
 				"command": "projectManager.todos.refresh",
 				"title": "%projectManager.commands.todos.refresh.title%"
 			},
@@ -379,6 +384,10 @@
 				},
 				{
 					"command": "_projectManager.reloadWindow",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.quickAccess.newFile",
 					"when": "false"
 				},
 				{
@@ -639,6 +648,16 @@
 				}
 			],
 			"view/item/context": [
+				{
+					"command": "_projectManager.quickAccess.newFile",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^QuickAccess(Node|Folder)Kind$/",
+					"group": "1_quickAccess"
+				},
+				{
+					"command": "_projectManager.quickAccess.newFile",
+					"when": "view == projectsExplorerFavorites && viewItem =~ /^QuickAccess(Node|Folder)Kind$/",
+					"group": "inline"
+				},
 				{
 					"command": "_projectManager.todos.refresh#sideBar",
 					"when": "view == projectsExplorerFavorites && viewItem == TodoRootNodeKind",
