@@ -5,10 +5,14 @@
 
 import { ThemeColor, window } from 'vscode';
 import { Container } from '../core/container';
+import { GROUP_URI_SCHEME, QUICK_ACCESS_GROUP_COLOR, TODOS_GROUP_COLOR } from './nodes';
 
 export function registerSideBarDecorations() {
     window.registerFileDecorationProvider({
         provideFileDecoration: (uri) => {
+            if (uri.scheme === GROUP_URI_SCHEME) {
+                return { color: new ThemeColor(uri.path === '/todos' ? TODOS_GROUP_COLOR : QUICK_ACCESS_GROUP_COLOR) };
+            }
             if (uri.scheme !== 'projectManager-view') return undefined;
 
             if (Container.currentProject && uri.path === Container.currentProject.rootPath) {

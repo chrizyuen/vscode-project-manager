@@ -97,6 +97,13 @@ export async function activate(context: vscode.ExtensionContext) {
                 () => ({}),  // done
                 () => vscode.window.showInformationMessage(l10n.t("Could not open the project!")));
     });
+    // single click in the side bar: always open in a new window
+    vscode.commands.registerCommand("_projectManager.openOnClick", (projectPath: string, projectName: string, profile: string) => {
+        vscode.commands.executeCommand("vscode.openFolder", buildProjectUri(projectPath), { forceProfile: profile, forceNewWindow: true })
+            .then(
+                () => ({}),  // done
+                () => vscode.window.showInformationMessage(l10n.t("Could not open the project!")));
+    });
     vscode.commands.registerCommand("_projectManager.openInNewWindow", (node) => {
         const uri = buildProjectUri(node.command.arguments[0]);
         const openInNewWindow = shouldOpenInNewWindow(true, CommandLocation.SideBar);

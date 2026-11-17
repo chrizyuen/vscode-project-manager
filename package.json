@@ -1162,6 +1162,24 @@
 					"dark": "#2fb15b",
 					"highContrast": "#2fb15b"
 				}
+			},
+			{
+				"id": "projectManager.sideBar.todosGroupForeground",
+				"description": "%projectManager.colors.sideBar.todosGroupForeground.description%",
+				"defaults": {
+					"light": "#b8860b",
+					"dark": "#e2c08d",
+					"highContrast": "#e2c08d"
+				}
+			},
+			{
+				"id": "projectManager.sideBar.quickAccessGroupForeground",
+				"description": "%projectManager.colors.sideBar.quickAccessGroupForeground.description%",
+				"defaults": {
+					"light": "#007acc",
+					"dark": "#4fc1ff",
+					"highContrast": "#4fc1ff"
+				}
 			}
 		],
 		"keybindings": [

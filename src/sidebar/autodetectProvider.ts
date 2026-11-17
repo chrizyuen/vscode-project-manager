@@ -40,7 +40,7 @@ export class AutodetectProvider implements vscode.TreeDataProvider<ProjectNode> 
                 const ll: ProjectNode[] = [];
 
                 ll.push(new ProjectNode(element.label, vscode.TreeItemCollapsibleState.None, "git", element.preview, {
-                    command: "_projectManager.open",
+                    command: "_projectManager.openOnClick",
                     title: "",
                     arguments: [ element.preview.path ],
                 }));
@@ -97,7 +97,7 @@ export class AutodetectProvider implements vscode.TreeDataProvider<ProjectNode> 
                                 detail: detail,
                                 path: dirinfo.path
                             }, {
-                                command: "_projectManager.open",
+                                command: "_projectManager.openOnClick",
                                 title: "",
                                 arguments: [ dirinfo.path, dirinfo.name ],
                             }));

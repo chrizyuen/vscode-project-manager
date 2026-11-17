@@ -4,7 +4,6 @@
 *--------------------------------------------------------------------------------------------*/
 
 import * as fs from "fs";
-import { execFileSync } from "child_process";
 import path = require("path");
 import * as vscode from "vscode";
 import { Container } from "../core/container";
@@ -14,20 +13,18 @@ import { isRemotePath } from "../utils/remote";
 import { sortProjects } from "../utils/sorter";
 import { getGitBranch } from "../utils/git";
 import { NO_TAGS_DEFINED } from "./constants";
-import { NoTagNode, PathNode, ProjectNode, TagNode, TodoFileNode, TodoItemNode, TodoRootNode } from "./nodes";
+import { NoTagNode, PathNode, ProjectNode, QuickAccessNode, TagNode, TodoFileNode, TodoItemNode, TodoRootNode } from "./nodes";
 import { getTodoConfig, todoCache, TodoItem } from "../todos/todos";
 
-export type StorageNode = ProjectNode | TagNode | PathNode | TodoRootNode | TodoFileNode | TodoItemNode | vscode.TreeItem;
+export type StorageNode = ProjectNode | TagNode | PathNode | QuickAccessNode | TodoRootNode | TodoFileNode | TodoItemNode | vscode.TreeItem;
 
 const TODO_FOLDER = ".todo";
 const IGNORED_TODO_ENTRIES = new Set([ ".DS_Store" ]);
 const PLAN_TAG = "@Plan";
-const IGNORED_PLAN_ENTRIES = new Set([ ".git", ".DS_Store" ]);
 
 interface ChildPath {
     fullPath: string;
     browsable: boolean;
-    plan?: boolean;
 }
 
 /**
@@ -38,48 +35,6 @@ function listTodoEntries(dir: string): ChildPath[] {
     try {
         return fs.readdirSync(dir, { withFileTypes: true })
             .filter(entry => !IGNORED_TODO_ENTRIES.has(entry.name) && (entry.isFile() || entry.isDirectory()))
-            .sort((a, b) => (Number(b.isDirectory()) - Number(a.isDirectory())) || a.name.localeCompare(b.name))
-            .map(entry => ({ fullPath: path.join(dir, entry.name), browsable: true }));
-    } catch {
-        return [];
-    }
-}
-
-/**
- * Subset of `names` (entries of `dir`) that git ignores, honoring every
- * applicable .gitignore, .git/info/exclude and the global excludes file.
- * Returns an empty set when `dir` is not inside a git repository.
- */
-function getGitIgnored(dir: string, names: string[]): Set<string> {
-    if (names.length === 0) {
-        return new Set();
-    }
-    try {
-        const out = execFileSync("git", [ "check-ignore", "-z", "--stdin" ], {
-            cwd: dir,
-            input: names.join("\0") + "\0",
-            encoding: "utf8",
-            stdio: [ "pipe", "pipe", "ignore" ]
-        });
-        return new Set(out.split("\0").filter(n => n.length > 0));
-    } catch (error) {
-        // exit code 1 = nothing ignored; anything else (not a repo, no git) = no filtering
-        const stdout = (error as { stdout?: string }).stdout;
-        return new Set(stdout ? stdout.split("\0").filter(n => n.length > 0) : []);
-    }
-}
-
-/**
- * Entries of a folder under a `@Plan` project (files and subfolders), folders
- * first, then by name, skipping whatever .gitignore excludes.
- */
-function listPlanEntries(dir: string): ChildPath[] {
-    try {
-        const entries = fs.readdirSync(dir, { withFileTypes: true })
-            .filter(entry => !IGNORED_PLAN_ENTRIES.has(entry.name) && (entry.isFile() || entry.isDirectory()));
-        const ignored = getGitIgnored(dir, entries.map(e => e.name));
-        return entries
-            .filter(entry => !ignored.has(entry.name))
             .sort((a, b) => (Number(b.isDirectory()) - Number(a.isDirectory())) || a.name.localeCompare(b.name))
             .map(entry => ({ fullPath: path.join(dir, entry.name), browsable: true }));
     } catch {
@@ -134,12 +89,10 @@ function listWorkspaceFolders(workspaceFile: string): string[] {
 
 /**
  * Child paths shown under a project node: the project's configured `paths`,
- * followed by the folders of a `.code-workspace` file, or for other local
- * projects the whole folder tree for `@Plan` projects (respecting .gitignore)
- * or else the contents of `<rootPath>/.todo` (listed by default, no config
- * needed; its subfolders expand in place).
+ * followed by the folders of a `.code-workspace` file. The `.todo` folder is
+ * listed separately, under the project's Quick Access node.
  */
-function getProjectChildPaths(projectPath: string, paths?: string[], tags?: string[]): ChildPath[] {
+function getProjectChildPaths(projectPath: string, paths?: string[]): ChildPath[] {
     const rootPath = PathUtils.expandHomePath(projectPath);
     const result: ChildPath[] = (paths ?? []).map(p => ({
         fullPath: path.resolve(rootPath, PathUtils.expandHomePath(p)),
@@ -153,17 +106,17 @@ function getProjectChildPaths(projectPath: string, paths?: string[], tags?: stri
         }
         return result;
     }
-    if (isRemotePath(projectPath)) {
-        return result;
-    }
-    const isPlan = (tags ?? []).includes(PLAN_TAG);
-    const entries = isPlan ? listPlanEntries(rootPath) : listTodoEntries(path.join(rootPath, TODO_FOLDER));
-    for (const entry of entries) {
-        if (!result.some(r => r.fullPath === entry.fullPath)) {
-            result.push(isPlan ? { ...entry, plan: true } : entry);
-        }
-    }
     return result;
+}
+
+/** The `<rootPath>/.todo` folder of a local, non-workspace project, if it has entries. */
+function getQuickAccessFolder(projectPath: string): string | undefined {
+    const rootPath = PathUtils.expandHomePath(projectPath);
+    if (isRemotePath(projectPath) || path.extname(rootPath) === ".code-workspace") {
+        return undefined;
+    }
+    const folder = path.join(rootPath, TODO_FOLDER);
+    return listTodoEntries(folder).length > 0 ? folder : undefined;
 }
 
 function isDirectory(p: string): boolean {
@@ -228,7 +181,6 @@ function groupTodosByFile(parentId: string, roots: string[], planRoots: string[]
 
 interface ProjectInQuickPick {
     label: string;
-    tags?: string[];
     description: string;
     profile: string;
     paths?: string[];
@@ -300,18 +252,23 @@ export class StorageProvider implements vscode.TreeDataProvider<StorageNode> {
             .map(p => path.resolve(PathUtils.expandHomePath(p.description)));
     }
 
-    private hasChildren(projectPath: string, projectName: string, paths?: string[], tags?: string[]): boolean {
-        return getProjectChildPaths(projectPath, paths, tags).length > 0
+    private hasChildren(projectPath: string, projectName: string, paths?: string[]): boolean {
+        return getProjectChildPaths(projectPath, paths).length > 0
+            || getQuickAccessFolder(projectPath) !== undefined
             || getTodoRoots(projectPath, projectName, this.getPlanRoots()).length > 0;
     }
 
     private async getProjectChildren(element: ProjectNode): Promise<StorageNode[]> {
-        const nodes: StorageNode[] = getProjectChildPaths(element.preview.path, element.preview.paths, element.preview.tags)
-            .map(c => new PathNode(path.basename(c.fullPath), c.fullPath, c.browsable, c.plan));
+        const nodes: StorageNode[] = getProjectChildPaths(element.preview.path, element.preview.paths)
+            .map(c => new PathNode(path.basename(c.fullPath), c.fullPath, c.browsable));
         const roots = getTodoRoots(element.preview.path, element.preview.name, this.getPlanRoots());
         if (roots.length) {
             const count = roots.every(r => todoCache.isScanned(r)) ? (await todoCache.getAll(roots)).length : undefined;
             nodes.unshift(new TodoRootNode(element.preview.name, roots, count));
+        }
+        const quickAccess = getQuickAccessFolder(element.preview.path);
+        if (quickAccess) {
+            nodes.splice(roots.length ? 1 : 0, 0, new QuickAccessNode(element.preview.name, quickAccess));
         }
         return nodes;
     }
@@ -337,6 +294,10 @@ export class StorageProvider implements vscode.TreeDataProvider<StorageNode> {
         if (element instanceof TodoRootNode || element instanceof TodoFileNode) {
             return this.getTodoChildren(element);
         }
+        if (element instanceof QuickAccessNode) {
+            return Promise.resolve(listTodoEntries(element.folder)
+                .map(c => new PathNode(path.basename(c.fullPath), c.fullPath, true)));
+        }
         if (element instanceof TodoItemNode) {
             return Promise.resolve([]);
         }
@@ -346,7 +307,7 @@ export class StorageProvider implements vscode.TreeDataProvider<StorageNode> {
 
             if (element instanceof PathNode) {
                 resolve(element.browsable
-                    ? (element.plan ? listPlanEntries(element.fullPath) : listTodoEntries(element.fullPath)).map(c => new PathNode(path.basename(c.fullPath), c.fullPath, true, element.plan))
+                    ? listTodoEntries(element.fullPath).map(c => new PathNode(path.basename(c.fullPath), c.fullPath, true))
                     : []);
             } else if (element) {
 
@@ -375,15 +336,14 @@ export class StorageProvider implements vscode.TreeDataProvider<StorageNode> {
                     const projectPath = PathUtils.expandHomePath(prj.description);
                     const gitBranch = (showGitBranch === "always" || showGitBranch === "onlyInSideBar") ? getGitBranch(projectPath) : undefined;
 
-                    nodes.push(new ProjectNode(prj.label, this.hasChildren(projectPath, prj.label, prj.paths, prj.tags) ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+                    nodes.push(new ProjectNode(prj.label, this.hasChildren(projectPath, prj.label, prj.paths) ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
                         iconFavorites, {
                             name: prj.label,
                             path: projectPath,
                             detail: gitBranch,
-                            paths: prj.paths,
-                            tags: prj.tags
+                            paths: prj.paths
                         }, {
-                            command: "_projectManager.open",
+                            command: "_projectManager.openOnClick",
                             title: "",
                             arguments: [ projectPath, prj.label, prj.profile ],
                         }));
@@ -459,16 +419,15 @@ export class StorageProvider implements vscode.TreeDataProvider<StorageNode> {
                     const projectPath = PathUtils.expandHomePath(prj.description);
                     const gitBranch = (showGitBranch === "always" || showGitBranch === "onlyInSideBar") ? getGitBranch(projectPath) : undefined;
 
-                    nodes.push(new ProjectNode(prj.label, this.hasChildren(projectPath, prj.label, prj.paths, prj.tags) ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+                    nodes.push(new ProjectNode(prj.label, this.hasChildren(projectPath, prj.label, prj.paths) ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
                         iconFavorites, {
                             name: prj.label,
                             path: projectPath,
                             detail: gitBranch,
-                            paths: prj.paths,
-                            tags: prj.tags
+                            paths: prj.paths
                         },
                         {
-                            command: "_projectManager.open",
+                            command: "_projectManager.openOnClick",
                             title: "",
                             arguments: [ projectPath, prj.label, prj.profile ],
                         }));

@@ -16,7 +16,6 @@ export interface ProjectPreview {
     path: string;
     detail?: string;
     paths?: string[];
-    tags?: string[];
 }
 
 export class ProjectNode extends TreeItem {
@@ -127,13 +126,13 @@ export class NoTagNode extends TagNode {
 
 /**
  * A file or folder listed under a project (from the project's `paths`, or the
- * contents of its `.todo` folder).
+ * contents of its `.todo` folder, under Quick Access).
  * Clicking a file opens it in the current window, regardless of the current project.
  * Clicking a folder opens it as a project, unless `browsable` is set: browsable
  * folders (those inside `.todo`) expand in place to show their own contents.
  */
 export class PathNode extends TreeItem {
-    constructor(public readonly label: string, public readonly fullPath: string, public readonly browsable = false, public readonly plan = false) {
+    constructor(public readonly label: string, public readonly fullPath: string, public readonly browsable = false) {
         super(label, TreeItemCollapsibleState.None);
         this.contextValue = "PathNodeKind";
         this.tooltip = fullPath;
@@ -149,11 +148,31 @@ export class PathNode extends TreeItem {
             this.iconPath = ThemeIcons.folder;
         } else if (isDirectory) {
             this.iconPath = ThemeIcons.folder;
-            this.command = { command: "_projectManager.open", title: "", arguments: [ fullPath, path.basename(fullPath), "" ] };
+            this.command = { command: "_projectManager.openOnClick", title: "", arguments: [ fullPath, path.basename(fullPath), "" ] };
         } else {
             this.iconPath = ThemeIcons.file;
             this.command = { command: "vscode.open", title: "", arguments: [ Uri.file(fullPath) ] };
         }
+    }
+}
+
+/** URI scheme of the group nodes (TODOs, Quick Access), used to color their titles. */
+export const GROUP_URI_SCHEME = "projectManager-group";
+export const TODOS_GROUP_COLOR = "projectManager.sideBar.todosGroupForeground";
+export const QUICK_ACCESS_GROUP_COLOR = "projectManager.sideBar.quickAccessGroupForeground";
+
+/**
+ * The "Quick Access" node under a project: expands to the contents of the
+ * project's `.todo` folder (subfolders expand in place).
+ */
+export class QuickAccessNode extends TreeItem {
+    constructor(public readonly projectName: string, public readonly folder: string) {
+        super("Quick Access", TreeItemCollapsibleState.Collapsed);
+        this.id = `quickAccess:${projectName}:${folder}`;
+        this.contextValue = "QuickAccessNodeKind";
+        this.iconPath = new ThemeIcon("star-empty", new ThemeColor(QUICK_ACCESS_GROUP_COLOR));
+        this.resourceUri = Uri.from({ scheme: GROUP_URI_SCHEME, path: "/quickAccess", query: this.id });
+        this.tooltip = folder;
     }
 }
 
@@ -166,7 +185,8 @@ export class TodoRootNode extends TreeItem {
         super("TODOs", TreeItemCollapsibleState.Collapsed);
         this.id = `todos:${projectName}:${roots.join("|")}`;
         this.contextValue = "TodoRootNodeKind";
-        this.iconPath = new ThemeIcon("checklist");
+        this.iconPath = new ThemeIcon("checklist", new ThemeColor(TODOS_GROUP_COLOR));
+        this.resourceUri = Uri.from({ scheme: GROUP_URI_SCHEME, path: "/todos", query: this.id });
         this.tooltip = roots.join("\n");
         if (count !== undefined) {
             this.description = `${count}`;

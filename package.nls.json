@@ -118,6 +118,8 @@
     "projectManager.configuration.tags.collapseItems.enumDescriptions.startExpanded": "Tag groups start expanded, but remember your last expand/collapse state.",
     "projectManager.configuration.tags.collapseItems.enumDescriptions.startCollapsed": "Tag groups start collapsed, but remember your last expand/collapse state.",
     "projectManager.colors.sideBar.currentProjectHighlightForeground.description": "The color to highlight the current project in the Side Bar",
+    "projectManager.colors.sideBar.todosGroupForeground.description": "The color of the TODOs group title in the Side Bar",
+    "projectManager.colors.sideBar.quickAccessGroupForeground.description": "The color of the Quick Access group title in the Side Bar",
     "projectManager.walkthroughs.title": "Get Started with Project Manager",
     "projectManager.walkthroughs.description": "Learn more about Project Manager to optimize your workflow",
     "projectManager.walkthroughs.saveYourFavoriteProjects.title": "Save Your Favorite Projects",

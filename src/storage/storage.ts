@@ -181,8 +181,7 @@ export class ProjectStorage {
                 label: item.name,
                 description: item.rootPath,
                 profile: item.profile,
-                paths: item.paths,
-                tags: item.tags
+                paths: item.paths
             };
         });
         return newItems;
@@ -210,8 +209,7 @@ export class ProjectStorage {
             return {
                 label: item.name,
                 description: item.rootPath,
-                paths: item.paths,
-                tags: item.tags
+                paths: item.paths
             };
         });
         return newItems;
@@ -228,8 +226,7 @@ export class ProjectStorage {
                 label: item.name,
                 description: item.rootPath,
                 profile: item.profile,
-                paths: item.paths,
-                tags: item.tags
+                paths: item.paths
             };
         });
         return newItems;
