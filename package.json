@@ -299,6 +299,10 @@
 				"title": "%projectManager.commands.quickAccess.delete.title%"
 			},
 			{
+				"command": "_projectManager.git.pullAll#sideBar",
+				"title": "%projectManager.commands.git.pullAll#sideBar.title%"
+			},
+			{
 				"command": "_projectManager.git.refresh#sideBar",
 				"title": "%projectManager.commands.git.refresh#sideBar.title%",
 				"icon": "$(refresh)"
@@ -425,6 +429,10 @@
 				},
 				{
 					"command": "_projectManager.quickAccess.delete",
+					"when": "false"
+				},
+				{
+					"command": "_projectManager.git.pullAll#sideBar",
 					"when": "false"
 				},
 				{
@@ -715,6 +723,11 @@
 					"command": "_projectManager.copyRelativePath#sideBar",
 					"when": "view =~ /projectsExplorer(Favorites|VSCode|Git|SVN|Any|Mercurial)/ && viewItem =~ /^(QuickAccessNodeKind|QuickAccessFolderKind|QuickAccessFileKind|PathNodeKind|TodoRootNodeKind|TodoFileNodeKind|TodoItemNodeKind|GitRootNodeKind|GitChangeNodeKind|GitChangeDeletedNodeKind)$/",
 					"group": "3_copy@2"
+				},
+				{
+					"command": "_projectManager.git.pullAll#sideBar",
+					"when": "view == projectsExplorerFavorites && viewItem == ProjectNodeKind",
+					"group": "4_git"
 				},
 				{
 					"command": "_projectManager.git.refresh#sideBar",

@@ -26,6 +26,7 @@ import { registerHelpAndFeedbackView } from "./sidebar/helpAndFeedbackView";
 import { registerRevealFileInOS } from "./commands/revealFileInOS";
 import { registerCopyPath } from "./commands/copyPath";
 import { registerAssignColor } from "./commands/assignColor";
+import { registerPullAll } from "./commands/pullAll";
 import { registerOpenSettings } from "./commands/openSettings";
 import { pickTags } from "./quickpick/tagsPicker";
 import { ViewFavoritesAs } from "./sidebar/constants";
@@ -63,6 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
     registerRevealFileInOS();
     registerCopyPath();
     registerAssignColor(() => providerManager.storageProvider.refresh());
+    registerPullAll(projectStorage, () => providerManager.storageProvider.refresh());
     registerOpenSettings();
     registerSupportProjectManager();
     registerHelpAndFeedbackView(context);

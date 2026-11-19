@@ -154,7 +154,7 @@ function getTodoRoots(projectPath: string, projectName: string, planRoots: strin
  * Folders checked for git changes for a project: its root folder, or the
  * local folders of a `.code-workspace` file. Remote projects have none.
  */
-function getGitRoots(projectPath: string): string[] {
+export function getGitRoots(projectPath: string): string[] {
     if (isRemotePath(projectPath)) {
         return [];
     }

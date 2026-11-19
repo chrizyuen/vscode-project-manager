@@ -41,6 +41,7 @@
     "projectManager.commands.quickAccess.newFile.title": "New File...",
     "projectManager.commands.quickAccess.rename.title": "Rename...",
     "projectManager.commands.quickAccess.delete.title": "Delete",
+    "projectManager.commands.git.pullAll#sideBar.title": "Pull Latest in All Git Folders",
     "projectManager.commands.git.refresh#sideBar.title": "Refresh Git Changes",
     "projectManager.commands.openInFinder#path.title": "Open in Finder",
     "projectManager.commands.openInExplorer#path.title": "Open in Explorer",
