@@ -159,6 +159,13 @@ export async function activate(context: vscode.ExtensionContext) {
         }
         gitRefreshTimer = setTimeout(() => providerManager.storageProvider.refresh(), 500);
     };
+    vscode.commands.registerCommand("_projectManager.openPreview#sideBar", (node: { fullPath?: string; change?: { file: string }; resourceUri?: vscode.Uri }) => {
+        const file = node?.fullPath ?? node?.change?.file;
+        const uri = file ? vscode.Uri.file(file) : node?.resourceUri;
+        if (uri) {
+            vscode.commands.executeCommand("markdown.showPreview", uri);
+        }
+    });
     vscode.commands.registerCommand("_projectManager.git.refresh#sideBar", () => providerManager.storageProvider.refresh());
     context.subscriptions.push(
         vscode.workspace.onDidSaveTextDocument(scheduleGitRefresh),
